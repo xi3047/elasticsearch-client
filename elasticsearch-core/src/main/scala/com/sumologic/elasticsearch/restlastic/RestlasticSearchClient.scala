@@ -234,7 +234,7 @@ object RestlasticSearchClient {
     }
 
     object SearchResponse {
-      val empty = SearchResponse(RawSearchResponse(Hits(List())), "{}")
+      val empty = SearchResponse(RawSearchResponse(Hits(List(), 0)), "{}")
     }
 
     case class CountResponse(count: Int)
@@ -249,7 +249,7 @@ object RestlasticSearchClient {
       def sourceAsMap: Seq[Map[String, Any]] = hits.hits.map(_._source.values)
     }
 
-    case class Hits(hits: List[ElasticJsonDocument])
+    case class Hits(hits: List[ElasticJsonDocument], total: Int)
     case class ElasticJsonDocument(_index: String,
                                    _type: String,
                                    _id: String,
