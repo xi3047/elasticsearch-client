@@ -1207,13 +1207,30 @@ trait RestlasticSearchClientTest {
       count should be(docsCount)
 
       val termQuery = TermQuery("text7", "here7")
-
       val delFut = restClient.deleteByQuery(index, tpe, new QueryRoot(termQuery), true)
-      Await.result(delFut, 20.seconds)
+      val deleteDocsResponse = Await.result(delFut, 20.seconds)
+      deleteDocsResponse.deletedDocumentsCount should be(docsCount)
       refresh()
 
       val count1 = Await.result(restClient.count(index, tpe, new QueryRoot(termQuery)), 10.seconds)
       count1 should be(0)
+    }
+
+    "Deleting by a query without waiting generates correct response" in {
+      val docsCount = 10011
+      val documents = (1 to docsCount).map(i => Document(s"doc$i", Map("text7" -> "here7")))
+      val bulkInsertResult = restClient.bulkIndex(index, tpe,documents)
+      Await.result(bulkInsertResult, 20.seconds)
+      refresh()
+
+      val count = Await.result(restClient.count(index, tpe, new QueryRoot(MatchAll)), 10.seconds)
+      count should be(docsCount)
+
+      val termQuery = TermQuery("text7", "here7")
+      val delFut = restClient.deleteByQuery(index, tpe, new QueryRoot(termQuery), false)
+      val deleteDocsResponse = Await.result(delFut, 20.seconds)
+
+      deleteDocsResponse.deletedDocumentsCount should be(-1)
     }
 
     "Delete only first page of query results" in {
